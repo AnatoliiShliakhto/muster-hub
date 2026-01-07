@@ -1,0 +1,40 @@
+[package]
+name = "mhub-kernel"
+description = "Kernel crate for the internal buisness logic"
+publish = false
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+default = []
+server = [
+    "dep:axum", "axum/json", "dep:utoipa", "dep:utoipa-axum", "dep:mhub-database",
+]
+client = []
+full = ["default", "server", "client"]
+
+[dependencies]
+mhub-domain.workspace = true
+mhub-derive.workspace = true
+mhub-event-bus.workspace = true
+mhub-database = { workspace = true, optional = true }
+
+thiserror.workspace = true
+axum = { workspace = true, optional = true }
+fxhash.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+utoipa = { workspace = true, optional = true }
+utoipa-axum = { workspace = true, optional = true }
+nanoid.workspace = true
+config.workspace = true
+tracing.workspace = true
+
+[lib]
+name = "mhub_kernel"
+path = "src/lib.rs"
+
+[lints]
+workspace = true

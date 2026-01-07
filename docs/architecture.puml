@@ -1,0 +1,102 @@
+@startuml
+skinparam linetype ortho
+skinparam shadowing true
+skinparam roundcorner 5
+skinparam fontname "Verdana"
+
+!define APP_COLOR #D1EAFF
+!define LOGIC_COLOR #F8FAFC
+!define FEATURE_COLOR #E2E8F0
+!define CORE_COLOR #BAE6FD
+!define INFRA_COLOR #F1F5F9
+!define BORDER_COLOR #64748B
+
+!define DOMAIN_CON #0284C7
+!define INFRA_CON #94A3B8
+!define FEATURE_CON #475569
+
+
+skinparam component {
+    BackgroundColor <<Entry Point>> #7DD3FC
+    BorderColor BORDER_COLOR
+}
+
+header MusterHub Architecture Context
+footer Generated for GitHub | AnatoliiShliakhto/muster-hub
+
+package "Presentation Layer" as Presentation #FFFFFF {
+    component [Shell (App)] as shell <<Entry Point>>
+    component [Desktop (App)] as desktop_app <<Entry Point>>
+    component [Server (App)] as server_app <<Entry Point>>
+    component [mhub-desktop (Dioxus)] as desktop <<Frontend>> APP_COLOR
+    component [mhub-server (Axum)] as server <<Backend>> APP_COLOR
+}
+
+package "Orchestration & Logic" as Logic #FFFFFF {
+    component [mhub (Facade)] as mhub <<Orchestrator>> #74C0FC
+
+    package "Features" #F1F5F9 {
+        component [mhub-licensing] as license <<Service>> FEATURE_COLOR
+        component [mhub-audit] as audit <<Service>> FEATURE_COLOR
+        component [mhub-organization] as organization <<Service>> FEATURE_COLOR
+        component [mhub-identity] as ident <<Service>> FEATURE_COLOR
+        component [mhub-iam] as iam <<Service>> FEATURE_COLOR
+    }
+
+    package "Domain & Core" #F1F5F9 {
+        component [mhub-kernel] as kernel <<Engine>> CORE_COLOR
+        component [mhub-domain] as domain <<DTO/Entities>> CORE_COLOR
+    }
+}
+
+package "Infrastructure Layer" as Infra #FFFFFF {
+    component [mhub-database] as db <<Persistence>> INFRA_COLOR
+    component [mhub-vault] as vault <<Security>> INFRA_COLOR
+    component [mhub-storage] as storage <<Filesystem>> INFRA_COLOR
+    component [mhub-event-bus] as events <<Bus>> INFRA_COLOR
+    component [mhub-logger] as logger <<Cross-cutting>> #FFFFFF
+    component [mhub-runtime] as runtime <<Async Runtime>> #FFFFFF
+    component [mhub-derive] as derive <<Macros>> #E0E7FF
+}
+
+' Apps
+shell -down-> desktop
+shell -down-> server
+
+desktop_app -down-> desktop
+server_app -down-> server
+
+desktop -down-> mhub : "'client' feature"
+server -down-> mhub : "'server' feature"
+
+' Facade
+mhub .[FEATURE_CON]-> license
+mhub .[FEATURE_CON]-> audit
+mhub .[FEATURE_CON]-> organization
+mhub .[FEATURE_CON]-> iam
+mhub .[FEATURE_CON]-> ident
+' mhub -[DOMAIN_CON]-> kernel
+
+' Kernel
+kernel -[DOMAIN_CON]-> domain
+
+' Features
+license .[DOMAIN_CON]-> domain
+
+audit .[DOMAIN_CON]-> kernel
+audit .[INFRA_CON].> db : ""
+organization .[DOMAIN_CON]-> kernel
+organization .[INFRA_CON].> db : ""
+ident .[DOMAIN_CON]-> kernel
+ident .[INFRA_CON].> db : ""
+iam .[DOMAIN_CON]-> kernel
+iam .[INFRA_CON].> db : ""
+
+' Server
+server .[INFRA_CON].> runtime
+server .[INFRA_CON].> logger
+server .[INFRA_CON].> db
+server .[INFRA_CON].> storage
+server .[INFRA_CON].> vault
+server .[INFRA_CON].> events
+@enduml

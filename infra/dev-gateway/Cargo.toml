@@ -1,0 +1,45 @@
+[package]
+name = "mhub-dev-gateway"
+description = "Dependency anchor crate for hot cache builds"
+publish = false
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+license.workspace = true
+
+[dependencies]
+# Facade
+mhub = { workspace = true, features = ["full"] }
+
+# Shared
+mhub-domain.workspace = true
+mhub-kernel = { workspace = true, features = ["full"] }
+
+# Features
+mhub-licensing = { workspace = true, features = ["full"] }
+mhub-audit = { workspace = true, features = ["full"] }
+mhub-organization = { workspace = true, features = ["full"] }
+mhub-identity = { workspace = true, features = ["full"] }
+
+# Infra
+mhub-database = { workspace = true, features = ["full"] }
+mhub-event-bus = { workspace = true, features = ["full"] }
+mhub-logger = { workspace = true, features = ["full"] }
+mhub-derive = { workspace = true, features = ["full"] }
+mhub-runtime = { workspace = true, features = ["full"] }
+mhub-vault = { workspace = true, features = ["default"] }
+mhub-storage = { workspace = true, features = ["full"] }
+
+# Apps
+mhub-server = { workspace = true, features = ["full"] }
+mhub-desktop = { workspace = true, features = ["full"] }
+
+[lib]
+name = "mhub_dev_gateway"
+path = "src/lib.rs"
+
+[lints]
+workspace = true

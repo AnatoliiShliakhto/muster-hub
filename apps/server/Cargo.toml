@@ -1,0 +1,44 @@
+[package]
+name = "mhub-server"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description.workspace = true
+keywords.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+license.workspace = true
+
+[features]
+default = []
+profiling = ["dep:dhat", "mhub-logger/profiling"]
+full = ["default"]
+
+[dependencies]
+mhub = { workspace = true, features = ["server"] }
+mhub-database.workspace = true
+mhub-runtime.workspace = true
+mhub-logger.workspace = true
+mhub-event-bus.workspace = true
+anyhow.workspace = true
+tokio = { workspace = true, features = ["signal"] }
+tracing.workspace = true
+axum.workspace = true
+axum-server = { workspace = true, features = ["tls-rustls"] }
+utoipa.workspace = true
+utoipa-axum.workspace = true
+utoipa-scalar = { workspace = true, features = ["axum"] }
+tower-http = { workspace = true, features = ["trace"] }
+dhat = { workspace = true, optional = true }
+
+[lib]
+name = "mhub_server"
+path = "src/lib.rs"
+
+[[bin]]
+name = "mhub-server"
+path = "src/main.rs"
+
+[lints]
+workspace = true

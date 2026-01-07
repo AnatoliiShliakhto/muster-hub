@@ -1,0 +1,37 @@
+[package]
+name = "mhub-audit"
+description = "Audit feature slice"
+publish = false
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+default = []
+server = [
+    "mhub-kernel/server",
+    "dep:mhub-database",
+    "dep:tokio",
+]
+client = []
+full = ["server", "client"]
+
+[package.metadata.migrations]
+depends_on = ["sys.database"]
+permissions = ["trail"]
+
+[dependencies]
+mhub-derive.workspace = true
+mhub-kernel.workspace = true
+mhub-database = { workspace = true, optional = true }
+thiserror.workspace = true
+tracing.workspace = true
+tokio = { workspace = true, optional = true }
+
+[lib]
+name = "mhub_audit"
+path = "src/lib.rs"
+
+[lints]
+workspace = true

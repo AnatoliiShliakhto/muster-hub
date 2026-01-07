@@ -1,0 +1,400 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, dev ]
+  pull_request:
+    branches: [ main, master, dev ]
+  merge_group:
+  schedule:
+    - cron: '0 2 * * 1'  # 2 AM UTC Mondays
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+  RUST_BACKTRACE: 1
+  RUSTFLAGS: -D warnings
+  RUSTUP_MAX_RETRIES: 10
+  NEXTEST_RETRIES: 2
+
+permissions: read-all
+
+jobs:
+  # -----------------------------------------------------------------
+  # JOB 1: Changes Detection
+  # -----------------------------------------------------------------
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-24.04
+    if: github.event_name != 'schedule'
+    permissions:
+      pull-requests: read
+    outputs:
+      rust: ${{ steps.filter.outputs.rust || 'true' }}
+      docs: ${{ steps.filter.outputs.docs || 'true' }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        continue-on-error: true
+        with:
+          filters: |
+            rust:
+              - '**/*.rs'
+              - '**/Cargo.toml'
+              - '**/Cargo.lock'
+              - 'rust-toolchain.toml'
+              - '.cargo/**'
+            docs:
+              - '**/*.rs'
+              - '**/*.md'
+              - '**/Cargo.toml'
+
+  # -----------------------------------------------------------------
+  # JOB 2: Check
+  # -----------------------------------------------------------------
+  check:
+    name: Check & Format
+    runs-on: ubuntu-24.04
+    needs: changes
+    if: |
+      always() &&
+      github.event_name != 'schedule' && 
+      (needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'push')
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          components: rustfmt
+          tools: ''
+          enable-sccache: 'false'
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-${{ runner.os }}
+          cache-on-failure: true
+
+      - name: Check Formatting
+        run: cargo fmt --all -- --check
+
+      - name: Verify Codegen Migrations
+        shell: bash
+        run: |
+          cargo xtask codegen migrations
+          git diff --exit-code
+
+      - name: Cargo Check
+        run: cargo check --workspace --all-features
+
+  # -----------------------------------------------------------------
+  # JOB 3: Clippy
+  # -----------------------------------------------------------------
+  clippy:
+    name: Clippy Lints
+    runs-on: ubuntu-24.04
+    needs: changes
+    if: |
+      always() &&
+      github.event_name != 'schedule' && 
+      !cancelled() && 
+      (needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'push')
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          components: clippy
+          tools: ''
+          enable-sccache: 'false'
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-${{ runner.os }}
+          cache-on-failure: true
+
+      - name: Run Clippy
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo clippy --workspace --all-features --message-format=json -- -D warnings | tee clippy-report.json
+
+      - name: Upload Clippy Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clippy-report
+          path: clippy-report.json
+          retention-days: 7
+
+  # -----------------------------------------------------------------
+  # JOB 4: Tests
+  # -----------------------------------------------------------------
+  test:
+    name: Test Suite
+    runs-on: ${{ matrix.os }}
+    needs: changes
+    if: |
+      always() &&
+      github.event_name != 'schedule' && 
+      !cancelled() && 
+      (needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'push')
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-24.04 ]
+        rust: [ stable ]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          tools: cargo-nextest@0.9.124
+          enable-sccache: 'false'
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-${{ runner.os }}
+          cache-on-failure: true
+
+      - name: Run Tests
+        run: |
+          cargo nextest run --workspace --all-features \
+            --failure-output immediate-final \
+            --success-output never \
+            --status-level skip \
+            --no-tests=pass
+
+      - name: Run Doc Tests
+        if: needs.changes.outputs.docs == 'true'
+        run: cargo test --doc --workspace --all-features
+
+  # -----------------------------------------------------------------
+  # JOB 5: Code Coverage
+  # -----------------------------------------------------------------
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-24.04
+    needs: changes
+    if: |
+      always() &&
+      github.event_name != 'schedule' && 
+      (github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          tools: ''
+          enable-sccache: 'false'
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov@0.8.1,cargo-nextest@0.9.124
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-${{ runner.os }}
+          cache-on-failure: true
+
+      - name: Generate Coverage
+        run: |
+          cargo llvm-cov nextest --workspace --all-features \
+            --lcov --output-path lcov.info
+
+      - name: Upload to Codecov
+        if: ${{ env.CODECOV_TOKEN != '' }}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ env.CODECOV_TOKEN }}
+          files: lcov.info
+          fail_ci_if_error: false
+
+  # -----------------------------------------------------------------
+  # JOB 6: Security Audit
+  # -----------------------------------------------------------------
+  security:
+    name: Security Audit
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+
+      - name: Run cargo-deny
+        run: cargo deny --workspace --all-features --log-level warn check
+
+      - name: Install cargo-audit
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
+
+      - name: Run cargo-audit
+        run: cargo audit
+
+  # -----------------------------------------------------------------
+  # JOB 7: Dependency Review
+  # -----------------------------------------------------------------
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+
+  # -----------------------------------------------------------------
+  # JOB 8: Build Benchmarks
+  # -----------------------------------------------------------------
+  bench:
+    name: Build Benchmarks
+    runs-on: ubuntu-24.04
+    needs: changes
+    if: |
+      always() &&
+      github.event_name != 'schedule' && 
+      (contains(github.event.head_commit.message, '[bench]') || github.event_name == 'workflow_dispatch')
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          tools: ''
+          enable-sccache: 'false'
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-${{ runner.os }}
+          cache-on-failure: true
+
+      - name: Build Benchmarks
+        run: cargo bench --workspace --all-features --benches --no-run
+
+  # -----------------------------------------------------------------
+  # JOB 9: Documentation
+  # -----------------------------------------------------------------
+  docs:
+    name: Documentation
+    runs-on: ubuntu-24.04
+    needs: changes
+    if: |
+      always() &&
+      github.event_name != 'schedule' && 
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') &&
+      (needs.changes.outputs.docs == 'true' || github.event_name == 'workflow_dispatch')
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          tools: ''
+          enable-sccache: 'false'
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-${{ runner.os }}
+          cache-on-failure: true
+
+      - name: Generate Documentation
+        env:
+          RUSTDOCFLAGS: --cfg docsrs -D warnings
+        run: |
+          cargo doc --no-deps --workspace --all-features --document-private-items
+          echo '<meta http-equiv="refresh" content="0;url=mhub/index.html">' > target/doc/index.html
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: target/doc
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # -----------------------------------------------------------------
+  # JOB 10: Final Status Check
+  # -----------------------------------------------------------------
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-24.04
+    needs: [ check, clippy, test ]
+    if: always() && github.event_name != 'schedule'
+    steps:
+      - name: Check All Jobs
+        run: |
+          results=(
+            "${{ needs.check.result }}"
+            "${{ needs.clippy.result }}"
+            "${{ needs.test.result }}"
+          )
+          
+          for result in "${results[@]}"; do
+            if [[ "$result" != "success" && "$result" != "skipped" ]]; then
+              echo "❌ Required job failed or was cancelled: $result"
+              exit 1
+            fi
+          done
+          
+          echo "✅ All required jobs passed!"
+
+  # -----------------------------------------------------------------
+  # JOB 11: Weekly Full Clippy
+  # -----------------------------------------------------------------
+  clippy-weekly:
+    name: Clippy Lints (Weekly, All Targets)
+    runs-on: ubuntu-24.04
+    if: |
+      github.event_name == 'schedule' &&
+      github.event.schedule == '0 2 * * 1'
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-deps
+        with:
+          components: clippy
+          tools: ''
+          enable-sccache: 'false'
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-${{ runner.os }}
+          cache-on-failure: true
+
+      - name: Run Clippy (All Targets)
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo clippy --workspace --all-features --all-targets -- -D warnings

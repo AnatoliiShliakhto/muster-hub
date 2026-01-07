@@ -1,0 +1,49 @@
+[package]
+name = "mhub-logger"
+description = "Logging infrastructure for a project using tracing and tracing-subscriber with file appender support"
+keywords = ["logging", "tracing", "infrastructure", "appender", "subscriber"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+license.workspace = true
+
+[features]
+default = []
+profiling = ["console-subscriber"]
+opentelemetry = ["dep:opentelemetry", "dep:tracing-opentelemetry"]
+opentelemetry-otlp = [
+    "opentelemetry",
+    "dep:opentelemetry-otlp",
+    "opentelemetry-otlp/trace",
+    "opentelemetry-otlp/grpc-tonic",
+    "dep:opentelemetry_sdk",
+    "opentelemetry_sdk/trace"
+]
+full = ["default", "opentelemetry-otlp"]
+
+[dependencies]
+mhub-derive.workspace = true
+
+console-subscriber = { workspace = true, optional = true }
+opentelemetry = { workspace = true, optional = true }
+opentelemetry-otlp = { workspace = true, optional = true }
+opentelemetry_sdk = { workspace = true, optional = true }
+thiserror.workspace = true
+tracing-appender.workspace = true
+tracing-opentelemetry = { workspace = true, optional = true }
+tracing-subscriber = { workspace = true, features = ["env-filter", "ansi", "json"] }
+tracing.workspace = true
+
+[dev-dependencies]
+serial_test.workspace = true
+tempfile.workspace = true
+
+[lib]
+name = "mhub_logger"
+path = "src/lib.rs"
+
+[lints]
+workspace = true

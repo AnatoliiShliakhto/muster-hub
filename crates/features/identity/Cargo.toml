@@ -1,0 +1,52 @@
+[package]
+name = "mhub-identity"
+description = "Identity feature slice"
+publish = false
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+default = []
+server = [
+    "mhub-kernel/server",
+    "dep:axum",
+    "dep:tower",
+    "dep:jsonwebtoken",
+    "dep:moka",
+    "dep:mhub-event-bus",
+    "dep:serde_json",
+    "dep:nanoid",
+    "dep:base64",
+    "dep:sha2",
+]
+client = ["mhub-kernel/client"]
+full = ["server", "client"]
+
+[package.metadata.migrations]
+depends_on = ["organization"]
+
+[dependencies]
+axum = { workspace = true, optional = true }
+base64 = { workspace = true, optional = true }
+jsonwebtoken = { workspace = true, optional = true }
+mhub-domain.workspace = true
+mhub-kernel.workspace = true
+mhub-derive.workspace = true
+mhub-event-bus = { workspace = true, optional = true }
+moka = { workspace = true, optional = true }
+nanoid = { workspace = true, optional = true }
+serde.workspace = true
+serde_json = { workspace = true, optional = true }
+sha2 = { workspace = true, optional = true }
+thiserror.workspace = true
+tower = { workspace = true, optional = true }
+tracing.workspace = true
+
+[lib]
+name = "mhub_identity"
+path = "src/lib.rs"
+
+[lints]
+workspace = true

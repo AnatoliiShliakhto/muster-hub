@@ -1,0 +1,24 @@
+services:
+  surrealdb:
+    container_name: mhub-db
+    image: surrealdb/surrealdb:nightly
+    user: root
+    ports: [ "8000:8000" ]
+    environment:
+      - SURREAL_USER=root
+      - SURREAL_PASS=root
+      - SURREAL_BIND=0.0.0.0:8000
+      - SURREAL_PATH=rocksdb:/data
+    entrypoint: [ "/surreal", "start" ]
+    volumes: [ "surrealdb:/data" ]
+    security_opt: [ "no-new-privileges:true" ]
+    restart: always
+    healthcheck:
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+      test: [ "CMD", "/surreal", "is-ready" ]
+
+volumes:
+  surrealdb: { driver: local }

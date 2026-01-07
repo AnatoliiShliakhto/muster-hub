@@ -1,0 +1,44 @@
+[package]
+name = "mhub-vault"
+description = "Secure vault library for encryption, decryption, and key derivation using ChaCha20-Poly1305 and AES-GCM"
+keywords = ["vault", "encryption", "security", "aes", "chacha20"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+license.workspace = true
+
+[features]
+default = []
+full = ["default"]
+
+[dependencies]
+mhub-derive.workspace = true
+aead.workspace = true
+aes-gcm = { workspace = true, features = ["aes"] }
+chacha20poly1305.workspace = true
+hkdf.workspace = true
+lz4_flex.workspace = true
+getrandom.workspace = true
+serde.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+zeroize = { workspace = true, features = ["derive"] }
+postcard = { workspace = true, features = ["use-std"] }
+
+[dev-dependencies]
+criterion.workspace = true
+proptest.workspace = true
+
+[lib]
+name = "mhub_vault"
+path = "src/lib.rs"
+
+[[bench]]
+name = "vault"
+harness = false
+
+[lints]
+workspace = true

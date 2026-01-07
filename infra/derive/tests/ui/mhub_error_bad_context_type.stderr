@@ -1,0 +1,5 @@
+error: context field must be Option<Cow<'static, str>>
+ --> tests/ui/mhub_error_bad_context_type.rs:9:18
+  |
+9 |         context: Option<String>,
+  |                  ^^^^^^^^^^^^^^

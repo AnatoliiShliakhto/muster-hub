@@ -1,0 +1,39 @@
+[package]
+name = "mhub-storage"
+description = "Sandboxed storage engine with atomic writes, namespaces, sharding, and optional LZ4 compression"
+keywords = ["storage", "filesystem", "sandbox", "atomic", "sharding"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+license.workspace = true
+
+[features]
+default = []
+full = ["default"]
+
+[dependencies]
+mhub-derive.workspace = true
+lz4_flex.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["fs", "io-util"] }
+tracing.workspace = true
+walkdir.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+tempfile.workspace = true
+tokio = { workspace = true, features = ["macros", "rt", "time"] }
+
+[lib]
+name = "mhub_storage"
+path = "src/lib.rs"
+
+[[bench]]
+name = "storage"
+harness = false
+
+[lints]
+workspace = true

@@ -1,0 +1,40 @@
+[package]
+name = "mhub-organization"
+description = "Organization tree slice"
+publish = false
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+default = []
+server = [
+    "mhub-kernel/server",
+    "dep:axum",
+    "dep:mhub-database",
+    "dep:mhub-event-bus",
+    "dep:tokio",
+]
+client = []
+full = ["server", "client"]
+
+[package.metadata.migrations]
+depends_on = ["audit"]
+
+[dependencies]
+axum = { workspace = true, optional = true }
+mhub-database = { workspace = true, optional = true }
+mhub-derive.workspace = true
+mhub-event-bus = { workspace = true, optional = true }
+mhub-kernel.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, optional = true }
+tracing.workspace = true
+
+[lib]
+name = "mhub_organization"
+path = "src/lib.rs"
+
+[lints]
+workspace = true

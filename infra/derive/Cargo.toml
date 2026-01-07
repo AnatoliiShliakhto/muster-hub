@@ -1,0 +1,31 @@
+[package]
+name = "mhub-derive"
+description = "Procedural macros for infrastructure components"
+keywords = ["macros", "procedural", "async", "runtime", "tokio"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+license.workspace = true
+
+[features]
+default = []
+full = ["default"]
+
+[dependencies]
+proc-macro2.workspace = true
+quote.workspace = true
+syn.workspace = true
+fxhash.workspace = true
+
+[dev-dependencies]
+trybuild.workspace = true
+thiserror.workspace = true
+
+[lib]
+proc-macro = true
+
+[lints]
+workspace = true

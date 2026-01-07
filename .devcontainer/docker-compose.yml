@@ -1,0 +1,56 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    command: sleep infinity
+    user: dev
+    volumes:
+      - ..:/workspaces/muster-hub:cached
+      - target:/workspaces/muster-hub/target
+    environment:
+      CARGO_HOME: /workspaces/muster-hub/.cargo
+      RUSTUP_HOME: /usr/local/rustup
+      RUST_BACKTRACE: "1"
+      PATH: /workspaces/muster-hub/.cargo/bin:/usr/local/cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    cap_add:
+      - SYS_PTRACE
+      - SYS_ADMIN
+      - PERFMON
+    security_opt:
+      - seccomp=unconfined
+    ports:
+      - "4583:4583"
+      - "6669:6669"
+      - "4040:4040"
+    depends_on:
+      surrealdb:
+        condition: service_healthy
+
+  surrealdb:
+    image: surrealdb/surrealdb:nightly
+    container_name: mhub-db
+    user: root
+    ports:
+      - "8000:8000"
+    environment:
+      SURREAL_USER: root
+      SURREAL_PASS: root
+      SURREAL_BIND: 0.0.0.0:8000
+      SURREAL_PATH: rocksdb:/data
+    entrypoint: [ "/surreal", "start" ]
+    volumes:
+      - surrealdb:/data
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    healthcheck:
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+      test: [ "CMD", "/surreal", "is-ready" ]
+
+volumes:
+  target: { }
+  surrealdb: { }

@@ -1,0 +1,27 @@
+[package]
+name = "{{package_name}}"
+description = "{{package_description}}"
+publish = false
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+default = []
+server = ["mhub-kernel/server"]
+client = ["mhub-kernel/client"]
+full = ["server", "client"]
+
+[package.metadata.migrations]
+depends_on = []
+permissions = []
+
+[dependencies]
+mhub-derive.workspace = true
+mhub-kernel.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true

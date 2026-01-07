@@ -1,0 +1,32 @@
+[package]
+name = "mhub-desktop"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description.workspace = true
+keywords.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+license.workspace = true
+
+[features]
+default = []
+full = ["default"]
+
+[dependencies]
+mhub = { workspace = true, features = ["client"] }
+dioxus = { workspace = true, features = ["desktop", "launch"] }
+
+[dev-dependencies]
+
+[lib]
+name = "mhub_desktop"
+path = "src/lib.rs"
+
+[[bin]]
+name = "mhub-desktop"
+path = "src/main.rs"
+
+[lints]
+workspace = true

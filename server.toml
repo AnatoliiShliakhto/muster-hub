@@ -1,0 +1,41 @@
+# --- server.toml ---
+# Variables be able to overrides from environment variables prefixed with `MHUB__`.
+# Nested structures are accessed using double underscores (e.g., `MHUB__DATABASE__URL` maps to `database.url`).
+
+[server]
+address = "::"
+port = 4583
+
+#[server.ssl]
+#cert = "cert.pem"
+#key = "key.pem"
+
+[database]
+url = "ws://localhost:8000"
+namespace = "mhub"
+database = "core"
+credentials = { username = "root", password = "root" }
+
+[storage]
+data_dir = "."
+static_dir = "public"
+
+[security.identity]
+session_cache_capacity = 10_000
+
+[security.identity.jwt]
+secret = "dev-only-change-me"
+issuer = "mhub"
+audience = "ident"
+ttl_seconds = 3600
+clock_skew_seconds = 60
+
+[security.identity.dpop]
+required = true
+nonce_required = true
+nonce_ttl_seconds = 300
+nonce_max_retries = 3
+nonce_cache_capacity = 10_000
+replay_ttl_seconds = 300
+replay_cache_capacity = 50_000
+clock_skew_seconds = 60

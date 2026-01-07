@@ -1,0 +1,27 @@
+[alias]
+warm = "build -p mhub-dev-gateway --all-features --all-targets"
+test-warm = "test --workspace --all-features --all-targets --no-run"
+xtask = "run --package xtask --bin xtask --"
+codegen = "run --package xtask --bin xtask -- codegen"
+format = "fmt --all"
+lint = "clippy --workspace --all-features --all-targets -- -D warnings"
+
+[build]
+target-dir = "target"
+#incremental = true
+#rustflags = ["--cfg", "tokio_unstable"]
+
+[target.x86_64-pc-windows-msvc]
+linker = "rust-lld"
+rustflags = ["-C", "target-feature=+crt-static", "-C", "link-arg=/DEBUG:FASTLINK"]
+
+[target.x86_64-unknown-linux-gnu]
+linker = "clang"
+rustflags = ["-C", "link-arg=-fuse-ld=mold"]
+
+[registries.crates-io]
+protocol = "sparse"
+
+[env]
+#CARGO_INCREMENTAL = "1"
+CARGO_WORKSPACE_DIR = { value = "", relative = true }

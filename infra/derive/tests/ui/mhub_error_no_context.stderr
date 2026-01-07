@@ -1,0 +1,5 @@
+error: mhub_error requires `context: Option<Cow<'static, str>>` for variants with a source
+ --> tests/ui/mhub_error_no_context.rs:6:5
+  |
+6 |     Io {
+  |     ^^
