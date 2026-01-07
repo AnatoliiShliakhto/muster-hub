@@ -1,0 +1,194 @@
+[workspace]
+resolver = "3"
+members = [
+    # Applications
+    "apps/*",
+    # Features (vertical slices)
+    "crates/features/*",
+    # Shared libraries
+    "crates/shared/*",
+    # Facade
+    "crates/mhub",
+    # Infrastructure
+    "infra/*",
+    # Tooling
+    "xtask"
+]
+exclude = []
+default-members = ["apps/server", "apps/shell"]
+
+[workspace.package]
+edition = "2024"
+version = "0.0.0"
+rust-version = "1.92.0"
+description = "MusterHub"
+keywords = ["musterhub", "education", "training", "modular", "platform"]
+authors = ["Anatolii Shliakhto <a.shlyakhto@gmail.com>"]
+repository = "https://github.com/AnatoliiShliakhto/muster-hub"
+readme = "README.md"
+license = "MIT"
+
+[profile.dev]
+opt-level = 0       # Fast compilation for YOUR code
+debug = true
+split-debuginfo = "unpacked"
+
+# Optimize heavy dependencies even in dev to make the app snappy
+[profile.dev.package."*"]
+opt-level = 2
+
+# Keep these at 3 because they are slow otherwise
+[profile.dev.package.surrealdb]
+opt-level = 3
+[profile.dev.package.tokio]
+opt-level = 3
+# Keep that at 0 for fast compiling
+[profile.dev.package.xtask]
+opt-level = 0
+
+[profile.release]
+opt-level = 3           # Optimization level
+lto = "thin"            # Full Link Time Optimization across all crates
+codegen-units = 1       # Reduces parallelism for better binary optimization
+panic = "abort"         # Reduces binary size by removing stack unwinding
+strip = "symbols"       # Automatically removes debug symbols (reduces size by ~20-40%)
+debug = false
+
+[profile.release.package."*"]
+opt-level = 3
+
+[profile.test]
+inherits = "dev"
+
+[patch.'crates-io']
+
+[workspace.metadata]
+features = [
+    { name = "server", description = "Enables Axum-based REST API and OpenAPI services", required = false },
+    { name = "client", description = "Enables Dioxus-based User Interface and frontend components", required = false },
+]
+
+[workspace.metadata.mhub]
+features = [
+    { name = "issuance", description = "Enables license generation routines", required = false },
+    { name = "storage-rocksdb", description = "Enable RocksDB local storage backend", required = false },
+]
+
+[workspace.dependencies]
+# Unified Platform Facade (Primary entry point for all applications)
+mhub = { path = "crates/mhub", default-features = false }
+
+# Infrastructure
+mhub-database = { path = "infra/database" }
+mhub-event-bus = { path = "infra/events" }
+mhub-logger = { path = "infra/logger" }
+mhub-derive = { path = "infra/derive" }
+mhub-runtime = { path = "infra/runtime" }
+mhub-vault = { path = "infra/vault" }
+mhub-storage = { path ="infra/storage" }
+
+# Shared
+mhub-kernel = { path = "crates/shared/kernel", default-features = false }
+mhub-domain = { path = "crates/shared/domain" }
+
+# Features (with default-features = false!)
+mhub-licensing = { path = "crates/features/licensing", default-features = false }
+mhub-identity = { path = "crates/features/identity", default-features = false }
+
+## Workspace dependencies
+anyhow = { version = "1.0.100", default-features = false }
+axum = { version = "0.8.8", default-features = false, features = [
+    "macros", "multipart", "tokio", "http1", "json"
+] }
+axum-server = { version = "0.8.0", features = ["tls-rustls"] }
+bitflags = { version = "2.10.0", features = ["serde"] }
+config = { version = "0.15.19", features = ["json", "toml", "yaml"] }
+dioxus = { version = "0.7.2", default-features = false }
+fxhash = "0.2.1"
+parking_lot = "0.12.5"
+postcard = { version = "1.1.3", features = ["use-std"] }
+serde = { version = "1.0.228", features = ["derive", "rc"] }
+serde_json = "1.0.149"
+surrealdb = { version = "3.0.0-beta.1", default-features = false, features = [
+    "protocol-ws", "http", "kv-mem", "rustls"
+] }
+thiserror = { version = "2.0.17", default-features = false }
+tokio = { version = "1.49.0", default-features = false, features = [
+    "rt", "rt-multi-thread", "macros", "time", "sync", "signal", "fs"
+] }
+tower = "0.5.3"
+tower-http = { version = "0.6.8", features = ["trace"] }
+tracing = "0.1.44"
+tracing-appender = "0.2.4"
+tracing-subscriber = { version = "0.3.22", default-features = false, features = ["env-filter", "json", "ansi"] }
+utoipa = { version = "5.4.0", default-features = false, features = ["macros"] }
+utoipa-axum = "0.2.0"
+utoipa-scalar = { version = "0.3.0", features = ["axum"] }
+
+## Security
+ed25519-dalek = { version = "3.0.0-pre.4", features = ["rand_core", "serde"] }
+aes-gcm = { version = "0.11.0-rc.2", default-features = false, features = ["aes", "rand_core", "getrandom"] }
+base64 = "0.22.1"
+lz4_flex = "0.12.0"
+nanoid = "0.4.0"
+sha2 = "0.11.0-rc.3"
+hkdf = "0.13.0-rc.3"
+zeroize = { version = "1.8.2", features = ["derive"] }
+chacha20poly1305 = "0.11.0-rc.2"
+rand = { version = "0.9.2", default-features = false, features = ["os_rng", "thread_rng"] }
+machineid-rs = "1.2.4"
+
+## Dev dependencies
+cargo-generate = { version = "0.23.7", default-features = false }
+clap = { version = "4.5.54", features = ["derive"] }
+quote = "1.0.43"
+proc-macro2 = "1.0.105"
+serial_test = "3.3.1"
+syn = { version = "2.0.114", features = ["full", "parsing"] }
+tempfile = "3.24.0"
+toml = "0.9.11"
+
+[workspace.lints.rust]
+# remember to update RUSTFLAGS in ci.yml if you add something here
+
+elided_lifetimes_in_paths = "warn"
+explicit_outlives_requirements = "warn"
+unsafe_op_in_unsafe_fn = "warn"
+unused_extern_crates = "warn"
+unused_lifetimes = "warn"
+missing_debug_implementations = "warn" # Every struct in the domain should be Debug
+unreachable_pub = "warn" # Helps identify code that doesn't need to be public
+#unused_crate_dependencies = "warn"
+
+[workspace.lints.clippy]
+## lint groups
+complexity = { level = "warn", priority = -1 }
+correctness = { level = "deny", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+perf = { level = "deny", priority = -1 }
+restriction = { level = "allow", priority = -1 }
+style = { level = "warn", priority = -1 }
+suspicious = { level = "warn", priority = -1 }
+
+## allow the following lints
+too_long_first_doc_paragraph = "allow"
+single_match = "allow"
+result_unit_err = "allow"
+len_without_is_empty = "allow"
+enum_variant_names = "allow"
+new_ret_no_self = "allow"
+useless_asref = "allow"
+assigning_clones = "allow"
+vec_init_then_push = "allow"
+literal_string_with_formatting_args = "allow"
+unnecessary_map_or = "allow"
+too_many_arguments = "allow"
+type_complexity = "allow"
+wrong_self_convention = "allow"
+dbg_macro = "warn"
+todo = "warn"
+print_stdout = "warn"
+print_stderr = "warn"
+rc_buffer = "warn"
+str_to_string = "warn"

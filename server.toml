@@ -1,0 +1,22 @@
+# server.toml
+
+[server]
+address = "::"
+port = 4583
+
+#[server.ssl]
+#cert = "cert.pem"
+#key = "key.pem"
+
+[server.security]
+api_key = "secret" # MHUB__SERVER__SECURITY__API_KEY
+
+[database]
+url = "ws://localhost:8101"
+namespace = "mhub"
+database = "core"
+credentials = { username = "root", password = "root" }
+
+[storage]
+data_dir = "."
+static_dir = "public"

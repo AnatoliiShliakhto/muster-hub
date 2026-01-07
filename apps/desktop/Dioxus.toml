@@ -1,0 +1,51 @@
+[application]
+name = "mhub"
+default_platform = "desktop"
+#static_dir = "assets/manual"
+
+[web.app]
+
+# HTML title tag content
+title = "MusterHub"
+
+[web.watcher]
+watch_path = ["apps/desktop/src"]
+
+[web.resource]
+style = []
+script = []
+
+[web.resource.dev]
+
+# Javascript code file
+# serve: [dev-server] only
+script = []
+
+[desktop]
+hot_reload = false
+
+#[bundle]
+#publisher = "Anatolii Shliakhto"
+#identifier = "dev.ashliakhto.maes"
+#copyright = "Copyright 2025 Anatolii Shliakhto"
+#category = "Utility"
+#short_description = "MAES"
+#long_description = "Military Aptitude & Evaluation System"
+#resources = ["target/dx/client/release/bundle", "maes/assets/libs", "i18n"]
+#icon = ["assets/icon.ico"]
+#
+#[bundle.windows]
+#icon_path = "maes/assets/icon.ico"
+#product_name = "MAES - Military Aptitude & Evaluation System"
+#file_description = "MAES - Military Aptitude & Evaluation System"
+#timestamp_url = "http://timestamp.digicert.com"
+#tsp = true
+#allow_downgrades = true
+#internal_name = "MAES"
+#original_filename = "maes.exe"
+#
+#[bundle.windows.wix]
+#dialog_image_path = "maes/assets/installer.png"
+
+#[bundle.windows.webview_install_mode.DownloadBootstrapper]
+#silent = true

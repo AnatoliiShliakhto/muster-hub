@@ -1,0 +1,36 @@
+[package]
+name = "mhub"
+description = "Feature Gateway Crate (Facade)"
+publish = false
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+default = []
+
+# Platform features
+server = [
+    "mhub-kernel/server",
+    "mhub-licensing",
+    "mhub-identity/server",
+]
+client = [
+    "mhub-kernel/client",
+    "mhub-identity/client",
+]
+
+# Optional features (can be disabled at compile time)
+full = []
+
+[dependencies]
+mhub-kernel.workspace = true
+mhub-domain.workspace = true
+mhub-identity.workspace = true
+mhub-licensing = { workspace = true, optional = true }
+mhub-database.workspace = true
+mhub-event-bus.workspace = true
+
+[lints]
+workspace = true

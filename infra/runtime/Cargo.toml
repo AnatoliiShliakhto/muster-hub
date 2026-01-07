@@ -1,0 +1,21 @@
+[package]
+name = "mhub-runtime"
+description = "Specialized async runtime wrapper with performance profiles"
+keywords = ["runtime", "tokio", "async", "performance", "bootstrap"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+license.workspace = true
+
+[dependencies]
+mhub-derive.workspace = true
+
+anyhow.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,26 @@
+[package]
+name = "mhub-database"
+description = "Database infrastructure layer providing SurrealDB integration"
+keywords = ["database", "surrealdb", "infrastructure", "storage", "rocksdb"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+license.workspace = true
+
+[features]
+default = []
+rocksdb = ["surrealdb/kv-rocksdb"]
+
+[dependencies]
+mhub-derive.workspace = true
+
+surrealdb.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true
