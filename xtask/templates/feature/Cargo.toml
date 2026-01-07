@@ -1,0 +1,30 @@
+[package]
+name = "{{ name | kebab_case }}"
+description = ""
+publish = false
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+default = []
+server = ["mhub-kernel/server"]
+client = ["mhub-kernel/client"]
+full = ["server", "client"]
+
+[package.metadata.migrations]
+depends_on = []
+permissions = []
+
+[dependencies]
+mhub-error = { workspace = true, features = ["std"] }
+mhub-kernel.workspace = true
+tracing.workspace = true
+
+[lib]
+name = "{{ name | snake_case }}"
+path = "src/lib.rs"
+
+[lints]
+workspace = true

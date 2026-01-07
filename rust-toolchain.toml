@@ -1,0 +1,14 @@
+[toolchain]
+channel = "1.93.1"     # Or "stable" version
+
+components = [
+    "rustfmt", # Standardized formatting
+    "clippy", # Professional linting
+    "rust-src", # Required for some cross-compilation/IDE support
+    "rust-analyzer", # Ensures IDE consistency
+    "llvm-tools-preview"
+]
+
+targets = ["wasm32-unknown-unknown"]
+
+profile = "default"

@@ -1,0 +1,47 @@
+[package]
+name = "mhub-database"
+description = "Database infrastructure layer providing SurrealDB integration"
+keywords = ["database", "surrealdb", "infrastructure", "storage", "rocksdb"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+license.workspace = true
+
+[package.metadata.migrations]
+bootstrap = true
+depends_on = []
+permissions = ["engine"]
+
+[features]
+default = []
+storage-rocksdb = ["surrealdb/kv-rocksdb"]
+storage-tikv = ["surrealdb/kv-tikv"]
+full = ["default", "storage-rocksdb", "storage-tikv"]
+
+[dependencies]
+mhub-error = { workspace = true, features = ["std", "surreal", "webtoken"] }
+chrono.workspace = true
+ed25519-dalek = { workspace = true, features = ["pkcs8", "alloc", "pem"] }
+fxhash.workspace = true
+getrandom.workspace = true
+jsonwebtoken.workspace = true
+mhub-derive.workspace = true
+moka = { workspace = true, features = ["future"] }
+serde.workspace = true
+surrealdb = { workspace = true, features = ["kv-mem", "http", "protocol-ws", "protocol-http", "rustls"] }
+surrealdb-types.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt", "time"] }
+
+[lib]
+name = "mhub_database"
+path = "src/lib.rs"
+
+[lints]
+workspace = true

@@ -1,0 +1,104 @@
+direction: right
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+# theme: 200
+
+# Styles
+classes: {
+  entry_point: {
+    style: {
+      fill: "#7DD3FC"
+      stroke: "#64748B"
+      stroke-width: 2
+    }
+  }
+  app: {
+    style: {
+      fill: "#D1EAFF"
+      stroke: "#64748B"
+    }
+  }
+  feature: {
+    style: {
+      fill: "#E2E8F0"
+      stroke: "#475569"
+    }
+  }
+  core: {
+    style: {
+      fill: "#BAE6FD"
+      stroke: "#0284C7"
+    }
+  }
+  infra: {
+    style: {
+      fill: "#F1F5F9"
+      stroke: "#94A3B8"
+    }
+  }
+}
+
+presentation: Presentation Layer {
+  shell: Shell (App) {class: entry_point}
+  desktop_app: Desktop (App) {class: entry_point}
+  server_app: Server (App) {class: entry_point}
+  desktop: mhub-desktop (Dioxus) {class: app}
+  server: mhub-server (Axum) {class: app}
+
+  shell -> desktop
+  shell -> server
+  desktop_app -> desktop
+  server_app -> server
+}
+
+infra: Infrastructure Layer {
+  db: mhub-database {class: infra}
+  vault: mhub-vault {class: infra}
+  storage: mhub-storage {class: infra}
+  events: mhub-event-bus {class: infra}
+  logger: mhub-logger {style: {fill: "#FFFFFF"}}
+  runtime: mhub-runtime {style: {fill: "#FFFFFF"}}
+  derive: mhub-derive {style: {fill: "#E0E7FF"}}
+}
+
+logic: Orchestration & Logic {
+  mhub: mhub (Facade) {
+    style: {fill: "#74C0FC"; stroke: "#64748B"}
+  }
+
+  features: Features {
+    style: {fill: "#F1F5F9"}
+    license: mhub-licensing {class: feature}
+    auth: mhub-identity {class: feature}
+  }
+
+  domain_core: Domain & Core {
+    style: {fill: "#F1F5F9"}
+    kernel: mhub-kernel {class: core}
+    domain: mhub-domain {class: core}
+  }
+
+  mhub -> features.license
+  mhub -> features.auth
+  mhub -> domain_core.kernel
+}
+
+# Connections
+presentation.desktop -> logic.mhub: 'client'
+presentation.server -> logic.mhub: 'server'
+
+logic.domain_core.kernel -> logic.domain_core.domain
+logic.features.license -> logic.domain_core.domain
+logic.features.auth -> logic.domain_core.kernel
+logic.features.auth -> infra.db
+
+presentation.server -> infra.runtime
+presentation.server -> infra.logger
+presentation.server -> infra.db
+presentation.server -> infra.storage
+presentation.server -> infra.vault
+presentation.server -> infra.events

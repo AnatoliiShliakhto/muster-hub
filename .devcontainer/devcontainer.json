@@ -1,0 +1,40 @@
+{
+  "name": "muster-hub",
+  "dockerComposeFile": [
+    "docker-compose.yml"
+  ],
+  "service": "app",
+  "workspaceFolder": "/workspaces/muster-hub",
+  "remoteUser": "dev",
+  "containerEnv": {
+    "CARGO_HOME": "/workspaces/muster-hub/.cargo",
+    "RUSTUP_HOME": "/usr/local/rustup",
+    "RUST_BACKTRACE": "1",
+    "PATH": "/workspaces/muster-hub/.cargo/bin:/usr/local/cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+  },
+  "forwardPorts": [
+    8000,
+    6669,
+    4583,
+    4040
+  ],
+  "portsAttributes": {
+    "8000": {
+      "label": "SurrealDB",
+      "onAutoForward": "notify"
+    },
+    "6669": {
+      "label": "tokio-console",
+      "onAutoForward": "notify"
+    },
+    "4583": {
+      "label": "mhub-server",
+      "onAutoForward": "notify"
+    },
+    "4040": {
+      "label": "flamegraph",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/scripts/post-create.sh"
+}

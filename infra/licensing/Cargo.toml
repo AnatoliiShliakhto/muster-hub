@@ -1,0 +1,32 @@
+[package]
+name = "mhub-licensing"
+description = "Cryptographic licensing engine"
+publish = false
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+default = []
+issuance = ["dep:getrandom"]
+full = ["default", "issuance"]
+
+[dependencies]
+mhub-error = { workspace = true, features = ["std", "json"] }
+base64.workspace = true
+ed25519-dalek.workspace = true
+machineid-rs.workspace = true
+postcard = { workspace = true, features = ["use-std"] }
+getrandom = { workspace = true, optional = true }
+serde.workspace = true
+serde_json.workspace = true
+zeroize = { workspace = true, features = ["derive"] }
+fxhash.workspace = true
+
+[lib]
+name = "mhub_licensing"
+path = "src/lib.rs"
+
+[lints]
+workspace = true

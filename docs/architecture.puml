@@ -1,0 +1,101 @@
+@startuml
+' --- Configuration ---
+skinparam linetype ortho
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam fontname "Verdana"
+
+' --- Color Definitions (Defined without the # to avoid double-hashing) ---
+!define APP_COLOR D1EAFF
+!define FACADE_COLOR 7DD3FC
+!define FEATURE_COLOR F8FAFC
+!define CORE_COLOR BAE6FD
+!define INFRA_COLOR F1F5F9
+!define FOUNDATION_COLOR FFF1F2
+!define BORDER_COLOR 64748B
+
+' --- Styles ---
+skinparam package {
+    BackgroundColor White
+    BorderColor #BORDER_COLOR
+}
+
+skinparam component {
+    BorderColor #BORDER_COLOR
+    BackgroundColor<<Entry Point>> #BAE6FD
+    BackgroundColor<<Frontend>> #E0F2FE
+    BackgroundColor<<Backend>> #E0F2FE
+}
+
+header MusterHub Architecture Framework
+footer Generated for GitHub | AnatoliiShliakhto/muster-hub
+
+' --- Layers ---
+
+package "1. Presentation Layer" as Presentation {
+    component [Shell] as shell <<Entry Point>>
+    component [Desktop App] as desktop_app <<Entry Point>>
+    component [Server App] as server_app <<Entry Point>>
+
+    component [desktop] as desktop <<Frontend>>
+    component [server] as server <<Backend>>
+}
+
+package "2. Logic & Orchestration" as Logic {
+    component [mhub] as mhub <<Facade>> #FACADE_COLOR
+
+    package "Features" as Features {
+        component [audit] as audit #FEATURE_COLOR
+        component [organization] as organization #FEATURE_COLOR
+        component [identity] as ident #FEATURE_COLOR
+        component [iam] as iam #FEATURE_COLOR
+    }
+
+    package "Core" as Core {
+        component [kernel] as kernel #CORE_COLOR
+        component [domain] as domain #CCFBF1
+    }
+}
+
+package "3. Infrastructure" as Infra {
+    package "Persistence & Communication" {
+        component [database] as db #INFRA_COLOR
+        component [event-bus] as events #INFRA_COLOR
+        component [storage] as storage #INFRA_COLOR
+    }
+    package "Security & Compliance" {
+        component [vault] as vault #INFRA_COLOR
+        component [licensing] as license #INFRA_COLOR
+    }
+    package "Foundational" as Foundation {
+        component [error] as error #FOUNDATION_COLOR
+        component [runtime] as runtime #F8FAFC
+        component [logger] as logger #F8FAFC
+        component [derive] as derive #EEF2FF
+    }
+}
+
+
+' --- Relationships ---
+
+shell --> desktop
+shell --> server
+desktop_app --> desktop
+server_app --> server
+
+desktop ..> mhub : "'client'"
+server ..> mhub : "'server'"
+
+mhub --> Features
+mhub --> Core
+Features --> Core
+kernel --> domain
+
+' Technical dependencies
+Logic ..> Infra
+' Presentation ..> Infra
+error --> derive
+runtime --> derive
+vault --> derive
+
+@enduml

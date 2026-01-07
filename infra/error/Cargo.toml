@@ -1,0 +1,38 @@
+[package]
+name = "mhub-error"
+description = "A unified error infrastructure for DDD/VSA architectures featuring semantic ErrorCodes, hierarchical reporting, and cross-ecosystem interop."
+keywords = ["error", "status-code", "structured-logging", "ddd", "vsa"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+license.workspace = true
+
+[features]
+default = ["std"]
+json = ["dep:serde", "serde_json"]
+reqwest = ["dep:reqwest"]
+std = []
+surreal = ["dep:surrealdb"]
+tokio = ["dep:tokio"]
+webtoken = ["dep:jsonwebtoken"]
+full = ["std", "surreal", "json", "webtoken", "tokio", "reqwest"]
+
+[dependencies]
+mhub-derive.workspace = true
+
+jsonwebtoken = { workspace = true, optional = true }
+reqwest = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
+surrealdb = { workspace = true, optional = true }
+tokio = { workspace = true, optional = true }
+
+[lib]
+name = "mhub_error"
+path = "src/lib.rs"
+
+[lints]
+workspace = true

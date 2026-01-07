@@ -1,0 +1,26 @@
+[package]
+name = "mhub-iam"
+description = "IAM feature slice"
+publish = false
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+default = []
+server = ["mhub-kernel/server"]
+client = ["mhub-kernel/client"]
+full = ["server", "client"]
+
+[package.metadata.migrations]
+depends_on = ["identity"]
+permissions = []
+
+[dependencies]
+mhub-error = { workspace = true, features = ["std"] }
+mhub-kernel.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true

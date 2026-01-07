@@ -1,0 +1,28 @@
+[package]
+name = "xtask"
+publish = false
+version.workspace = true
+license.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+mhub-licensing = { workspace = true, features = ["issuance"] }
+mhub-error = { workspace = true, features = ["std", "json"] }
+
+cargo-generate.workspace = true
+clap.workspace = true
+postcard.workspace = true
+serde.workspace = true
+toml_edit.workspace = true
+fxhash.workspace = true
+sha2.workspace = true
+hex.workspace = true
+heck.workspace = true
+
+[dev-dependencies]
+#assert_cmd.workspace = true
+#predicates.workspace = true
+
+[lints]
+workspace = true
