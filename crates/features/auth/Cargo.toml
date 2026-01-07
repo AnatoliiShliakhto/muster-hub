@@ -1,0 +1,20 @@
+[package]
+name = "mhub-identity"
+description = "It's a new feature identity"
+publish = false
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+api = ["mhub-core/api"]
+ui = ["mhub-core/ui"]
+
+[dependencies]
+mhub-core = { path = "../core" }
+
+thiserror.workspace = true
+
+[lints]
+workspace = true

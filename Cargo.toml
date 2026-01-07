@@ -1,0 +1,118 @@
+[workspace]
+resolver = "3"
+members = ["apps/*", "crates/*", "infra/*", "xtask"]
+exclude = []
+default-members = ["apps/shell"]
+
+[workspace.package]
+edition = "2024"
+version = "0.0.0"
+rust-version = "1.92.0"
+description = "MusterHub"
+keywords = ["Rust", "LMS", "WASM", "application"]
+authors = ["Anatolii Shliakhto <a.shlyakhto@gmail.com>"]
+repository = "https://github.com/AnatoliiShliakhto/muster-hub"
+readme = "README.md"
+license = "MIT"
+
+[profile.dev]
+debug = 1
+opt-level = 3
+
+[profile.release]
+debug = 0
+
+[patch.'crates-io']
+
+[workspace.dependencies]
+muster-core = { path = "crates/core" }
+muster-domain = { path = "crates/domain" }
+
+muster-db = { path = "infra/db" }
+muster-logger = { path = "infra/logger" }
+muster-event-bus = { path = "infra/events" }
+
+axum = { version = "0.8.8", features = ["tokio"] }
+axum-server = { version = "0.8.0", features = ["rustls"] }
+anyhow = { version = "1.0.100" }
+thiserror = { version = "2.0.17" }
+clap = { version = "4.5.53", features = ["derive"] }
+tokio = { version = "1.48.0" }
+dioxus = { version = "0.7.2" }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = { version = "1.0.147" }
+parking_lot = { version = "0.12.5" }
+config = { version = "0.15.19" }
+surrealdb = { version = "3.0.0-beta.1" }
+fxhash = { version = "0.2.1" }
+tempfile = { version = "3.24.0" }
+serial_test = { version = "3.2.0" }
+cargo-generate = { version = "0.23.7", default-features = false }
+
+tracing  = { version = "0.1.44" }
+tracing-appender = { version = "0.2.4" }
+tracing-subscriber = { version = "0.3.22", features = ["env-filter", "json"] }
+
+
+[workspace.lints.rust]
+# remember to update RUSTFLAGS in ci.yml if you add something here
+
+elided_lifetimes_in_paths = "warn"
+explicit_outlives_requirements = "warn"
+unsafe_op_in_unsafe_fn = "warn"
+unused_extern_crates = "warn"
+unused_lifetimes = "warn"
+
+[workspace.lints.clippy]
+# FIXME Remove the tidy test once the lint table is stable
+
+## lint groups
+complexity = { level = "warn", priority = -1 }
+correctness = { level = "deny", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+perf = { level = "deny", priority = -1 }
+restriction = { level = "allow", priority = -1 }
+style = { level = "warn", priority = -1 }
+suspicious = { level = "warn", priority = -1 }
+
+## allow the following lints
+too_long_first_doc_paragraph = "allow"
+# subjective
+single_match = "allow"
+# () makes a fine error in most cases
+result_unit_err = "allow"
+# We don't expose public APIs that matter like this
+len_without_is_empty = "allow"
+# We have macros that rely on this currently
+enum_variant_names = "allow"
+# Builder pattern disagrees
+new_ret_no_self = "allow"
+# Has a bunch of false positives
+useless_asref = "allow"
+# Has false positives
+assigning_clones = "allow"
+# Does not work with macros
+vec_init_then_push = "allow"
+# Our tests have a lot of these
+literal_string_with_formatting_args = "allow"
+# This lint has been empowered but now also triggers on cases where it's invalid to do so
+# due to it ignoring move analysis
+unnecessary_map_or = "allow"
+
+## Following lints should be tackled at some point
+too_many_arguments = "allow"
+type_complexity = "allow"
+wrong_self_convention = "allow"
+
+## warn at following lints
+# CI raises these to deny
+dbg_macro = "warn"
+todo = "warn"
+print_stdout = "warn"
+print_stderr = "warn"
+
+rc_buffer = "warn"
+str_to_string = "warn"
+
+unused_crate_dependencies = "warn"

@@ -1,0 +1,21 @@
+[package]
+name = "mhub-macros"
+description = "Procedural macros for infrastructure components"
+keywords = ["macros", "procedural", "async", "runtime", "tokio"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+license.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+quote.workspace = true
+syn.workspace = true
+
+[lints]
+workspace = true

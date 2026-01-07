@@ -1,0 +1,25 @@
+[package]
+name = "mhub"
+description = "It's a facade of features"
+publish = false
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+full = ["api", "ui", "identity"]
+
+api = ["mhub-core/api"]
+ui = ["mhub-core/ui"]
+identity = ["dep:mhub-identity"]
+
+[dependencies]
+mhub-core = { path = "../core" }
+mhub-domain = { path = "../domain" }
+mhub-identity = { path = "../identity", optional = true }
+
+anyhow.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,21 @@
+[package]
+name = "muster-event-bus"
+description = "Async event bus implementation for pub-sub messaging patterns"
+keywords = ["event-bus", "pubsub", "async", "messaging", "observer"]
+edition.workspace = true
+version.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+license.workspace = true
+
+[dependencies]
+tokio = { workspace = true, features = ["sync", "rt", "macros"]}
+tracing.workspace = true
+thiserror.workspace = true
+parking_lot.workspace = true
+fxhash.workspace = true
+
+[lints]
+workspace = true
