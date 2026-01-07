@@ -1,0 +1,33 @@
+[package]
+name = "mhub-event-bus"
+description = "Async thread-safe event bus implementation for pub-sub messaging patterns"
+keywords = ["event-bus", "pubsub", "async", "messaging", "observer"]
+edition.workspace = true
+version.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+license.workspace = true
+
+[features]
+default = []
+full = ["default"]
+
+[dependencies]
+mhub-derive.workspace = true
+fxhash.workspace = true
+parking_lot.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["sync"] }
+tracing.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt", "time"] }
+
+[lib]
+name = "mhub_event_bus"
+path = "src/lib.rs"
+
+[lints]
+workspace = true

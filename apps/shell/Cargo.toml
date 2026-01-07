@@ -1,0 +1,27 @@
+[package]
+name = "mhub-shell"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description.workspace = true
+keywords.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+license.workspace = true
+
+[features]
+default = []
+full = ["default"]
+
+[dependencies]
+mhub-logger.workspace = true
+mhub-runtime.workspace = true
+anyhow.workspace = true
+
+[[bin]]
+name = "muster"
+path = "src/main.rs"
+
+[lints]
+workspace = true

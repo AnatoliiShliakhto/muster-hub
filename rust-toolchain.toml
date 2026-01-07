@@ -1,0 +1,19 @@
+[toolchain]
+channel = "1.93.0"     # Or "stable" version
+
+components = [
+    "rustfmt", # Standardized formatting
+    "clippy", # Professional linting
+    "rust-src", # Required for some cross-compilation/IDE support
+    "rust-analyzer"    # Ensures IDE consistency
+]
+
+targets = [
+    "x86_64-pc-windows-msvc", # Windows Desktop
+    "x86_64-unknown-linux-gnu", # Linux Desktop (Server)
+    "wasm32-unknown-unknown", # Dioxus Web (WASM)
+    "aarch64-linux-android", # Android (Modern ARM64)
+    "armv7-linux-androideabi"     # Android (Older 32-bit)
+]
+
+profile = "default"

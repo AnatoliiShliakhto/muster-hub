@@ -1,0 +1,55 @@
+@startuml
+skinparam shadowing false
+skinparam roundcorner 5
+
+!define HUB_COLOR #BAE6FD
+!define CLIENT_COLOR #F1F5F9
+!define ADMIN_COLOR #7DD3FC
+
+actor Admin
+participant Hub as "MusterHub"
+box "Local Network" #F8FAFC
+    participant Client as "Client"
+end box
+database DB as "Vault"
+
+skinparam actorBackgroundColor<<Admin>> ADMIN_COLOR
+skinparam participantBackgroundColor<<Hub>> HUB_COLOR
+skinparam participantBackgroundColor<<Client>> CLIENT_COLOR
+skinparam databaseBackgroundColor DB #F8F9FA
+
+header
+<style>
+sequenceDiagram {
+  actor {
+    BackgroundColor ADMIN_COLOR
+  }
+  participant {
+    BackgroundColor HUB_COLOR
+  }
+}
+</style>
+end header
+
+== 1. Orchestrate ==
+Admin -> Hub : Create Task
+Hub -> DB : Save config
+
+== 2. Broadcast ==
+Hub -> Hub : Start Axum Server
+Admin -> Client : "Join Wi-Fi"
+
+== 3. Engage ==
+Client -> Hub : Request UI
+Hub -> Client : Load WASM
+note right of Client: Work locally
+
+== 4. Consolidate ==
+Client -> Hub : Submit Results
+Hub -> Hub : Validate
+Hub -> DB : Encrypt & Store
+
+== 5. Report ==
+Admin -> Hub : Request Reports
+Hub -> Admin : Show Analytics
+@enduml

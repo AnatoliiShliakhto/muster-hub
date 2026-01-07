@@ -1,0 +1,6 @@
+error: mhub_error requires named fields for source/context handling
+ --> tests/ui/mhub_error_tuple_variant.rs:5:5
+  |
+5 | /     #[error("IO error: {0}")]
+6 | |     Io(std::io::Error),
+  | |______________________^
