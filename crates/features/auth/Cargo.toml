@@ -1,5 +1,5 @@
 [package]
-name = "mhub-identity"
+name = "mhub-auth"
 description = "It's a new feature identity"
 publish = false
 version.workspace = true
@@ -8,13 +8,15 @@ rust-version.workspace = true
 license.workspace = true
 
 [features]
-api = ["mhub-core/api"]
-ui = ["mhub-core/ui"]
+default = []
+api = ["mhub-kernel/api"]
+ui = ["mhub-kernel/ui"]
 
 [dependencies]
-mhub-core = { path = "../core" }
+mhub-kernel = { workspace = true, default-features = false }
 
 thiserror.workspace = true
+tracing.workspace = true
 
 [lints]
 workspace = true

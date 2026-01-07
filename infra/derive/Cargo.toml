@@ -1,5 +1,5 @@
 [package]
-name = "mhub-macros"
+name = "mhub-derive"
 description = "Procedural macros for infrastructure components"
 keywords = ["macros", "procedural", "async", "runtime", "tokio"]
 version.workspace = true

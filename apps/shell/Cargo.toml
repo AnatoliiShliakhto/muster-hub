@@ -1,5 +1,5 @@
 [package]
-name = "muster-shell"
+name = "mhub-shell"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -11,7 +11,9 @@ readme.workspace = true
 license.workspace = true
 
 [dependencies]
-muster-core.workspace = true
+mhub-logger.workspace = true
+mhub-runtime.workspace = true
+anyhow.workspace = true
 
 [[bin]]
 name = "muster"

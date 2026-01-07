@@ -11,6 +11,9 @@ check-all = "check --workspace --all-targets --all-features"
 linker = "rust-lld"
 rustflags = ["-C", "target-feature=+crt-static"]
 
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-C", "link-arg=-fuse-ld=mold"]
+
 [registries.crates-io]
 protocol = "sparse"
 

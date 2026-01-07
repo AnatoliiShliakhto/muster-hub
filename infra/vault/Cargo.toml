@@ -1,7 +1,7 @@
 [package]
 name = "mhub-vault"
-description = "It's a new library mhub-vault"
-keywords = []
+description = "Secure vault library for encryption, decryption, and key derivation using ChaCha20-Poly1305 and AES-GCM"
+keywords = ["vault", "encryption", "security", "aes", "chacha20"]
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -11,16 +11,17 @@ readme.workspace = true
 license.workspace = true
 
 [dependencies]
-thiserror.workspace = true
+mhub-derive.workspace = true
+aes-gcm = { workspace = true, features = ["aes", "rand_core", "getrandom"] }
+chacha20poly1305.workspace = true
+hkdf.workspace = true
+lz4_flex.workspace = true
+rand = { workspace = true, features = ["thread_rng"] }
 serde.workspace = true
 serde_json.workspace = true
-chacha20poly1305 = "0.11.0-rc.2"
-aes-gcm = { workspace = true, features = ["aes", "rand_core", "getrandom"] }
-lz4_flex.workspace = true
 sha2.workspace = true
-hkdf.workspace = true
+thiserror.workspace = true
 zeroize.workspace = true
-rand = { workspace = true, features = ["thread_rng"]}
 
 [lints]
 workspace = true

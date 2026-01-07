@@ -1,19 +1,7 @@
+mod fixtures;
+
 use mhub_vault::prelude::*;
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-struct SecureConfig {
-    db_password: String,
-    api_key: String,
-}
-
-fn setup_vault() -> Vault {
-    Vault::builder()
-        .with_derived_keys("master-secret-123", "unique-salt", "machine-01")
-        .with_compression(true)
-        .build()
-        .expect("Vault setup failed")
-}
+use fixtures::*;
 
 #[test]
 fn test_vault_ext_roundtrip() {
@@ -23,14 +11,32 @@ fn test_vault_ext_roundtrip() {
         api_key: "abc-123".into(),
     };
 
-    // 1. Seal using Extension Trait (Local Domain)
-    let sealed = config.seal_local(&vault).expect("Sealing failed");
+    let sealed =
+        config.seal_local_with_ctx(&vault, b"").expect("Sealing failed");
+    let unsealed: SecureConfig =
+        vault.unseal(&sealed).expect("Unsealing failed");
+    assert_eq!(config, unsealed);
 
-    // 2. Unseal using explicit unseal (requires type name matching)
+    let sealed = config.seal_local_tagged(&vault).expect("Sealing failed");
     let unsealed: SecureConfig = vault
-        .unseal_json(&sealed, &"integration::SecureConfig")
+        .unseal_with_ctx(&sealed, &"SecureConfig")
         .expect("Unsealing failed");
+    assert_eq!(config, unsealed);
 
+    let sealed = config.seal_fleet_tagged(&vault).expect("Sealing failed");
+    let unsealed: SecureConfig =
+        vault.unseal_tagged(&sealed).expect("Unsealing failed");
+    assert_eq!(config, unsealed);
+
+    let sealed = config.seal_fleet(&vault).expect("Sealing failed");
+    let unsealed: SecureConfig =
+        vault.unseal(&sealed).expect("Unsealing failed");
+    assert_eq!(config, unsealed);
+
+    let sealed =
+        config.seal_fleet_with_ctx(&vault, &b"").expect("Sealing failed");
+    let unsealed: SecureConfig =
+        vault.unseal(&sealed).expect("Unsealing failed");
     assert_eq!(config, unsealed);
 }
 
@@ -43,7 +49,8 @@ fn test_context_binding_security() {
     let sealed = vault.seal_json::<Local>(&data, &context).unwrap();
 
     // Attempt to unseal with the wrong context
-    let result: Result<String, VaultError> = vault.unseal_json(&sealed, &"wrong-context");
+    let result: Result<String, VaultError> =
+        vault.unseal_json(&sealed, &"wrong-context");
 
     assert!(
         matches!(result, Err(VaultError::DecryptionFailed(_))),

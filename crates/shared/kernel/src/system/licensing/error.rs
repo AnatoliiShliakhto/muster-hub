@@ -10,12 +10,13 @@ pub enum LicenseError {
     
     #[error("License is not valid for this hardware")]
     HardwareMismatch,
-    
+
+    #[error("Machine ID generation failed: {0}")]
+    MachineIDGenerationFailed(String),
+
     #[error("Serialization error: {0}")]
     Serialize(#[from] serde_json::Error),
     
     #[error("Internal error during validation: {0}")]
     Internal(String),
 }
-
-pub type LicenseResult<T> = Result<T, LicenseError>;

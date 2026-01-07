@@ -1,0 +1,23 @@
+[package]
+name = "{{package_name}}"
+description = "{{package_description}}"
+keywords = []
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme.workspace = true
+license.workspace = true
+
+[dependencies]
+mhub-core.workspace = true
+
+anyhow.workspace = true
+
+[[bin]]
+name = "{{package_bin}}"
+path = "src/main.rs"
+
+[lints]
+workspace = true

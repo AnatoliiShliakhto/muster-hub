@@ -4,10 +4,6 @@ use thiserror::Error as ThisError;
 /// A specialized [`Error`] enum of this crate.
 #[derive(Debug, ThisError)]
 pub enum Error {
-    /// License validation errors
-    #[error(transparent)]
-    LicenseValidation(#[from] mhub_domain::licensing::LicenseError),
-
     /// Internal logic errors.
     #[error("{0}")]
     Internal(Cow<'static, str>),

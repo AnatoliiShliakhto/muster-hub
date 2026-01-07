@@ -1,6 +1,6 @@
 [package]
 name = "mhub-domain"
-description = "Domain crate for models and entities (no logic)"
+description = "Pure domain models (no external dependencies, no logic)"
 publish = false
 version.workspace = true
 edition.workspace = true
@@ -8,9 +8,10 @@ rust-version.workspace = true
 license.workspace = true
 
 [dependencies]
+# ONLY these two!
 serde.workspace = true
-thiserror.workspace = true
-# There must have been no more depencies
+bitflags.workspace = true
+# No more depencies here!
 
 [lints]
 workspace = true

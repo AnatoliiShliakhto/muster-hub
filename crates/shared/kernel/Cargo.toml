@@ -1,6 +1,6 @@
 [package]
-name = "mhub-core"
-description = "Core feature crate for the internal buisness logic"
+name = "mhub-kernel"
+description = "Kernel crate for the internal buisness logic"
 publish = false
 version.workspace = true
 edition.workspace = true
@@ -8,19 +8,28 @@ rust-version.workspace = true
 license.workspace = true
 
 [features]
-api = ["dep:axum", "dep:serde_json", "dep:utoipa", "ed25519-dalek"]
+api = [
+    "dep:axum", "dep:serde_json", "dep:utoipa", "dep:ed25519-dalek", "dep:rand",
+    "dep:machineid-rs", "dep:utoipa-axum", "dep:base64", "dep:mhub-db"
+]
 ui = []
 
 [dependencies]
-mhub-domain = { path = "../domain" }
+mhub-domain.workspace = true
 mhub-derive.workspace = true
+mhub-event-bus.workspace = true
+mhub-db = { workspace = true, optional = true}
 
 thiserror.workspace = true
 axum = { workspace = true, optional = true, features = ["json"] }
 serde.workspace = true
 serde_json = { workspace = true, optional = true }
 utoipa = { workspace = true, optional = true }
+utoipa-axum = { workspace = true, optional = true }
 ed25519-dalek = { workspace = true, optional = true }
+rand = { workspace = true, optional = true, features = ["os_rng"] }
+machineid-rs = { workspace = true, optional = true }
+base64 = { workspace = true, optional = true }
 
 [lints]
 workspace = true

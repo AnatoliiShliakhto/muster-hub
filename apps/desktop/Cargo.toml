@@ -1,5 +1,5 @@
 [package]
-name = "muster-desktop"
+name = "mhub-desktop"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -11,9 +11,15 @@ readme.workspace = true
 license.workspace = true
 
 [dependencies]
+mhub = { workspace = true, features = ["ui"] }
+dioxus = { workspace = true, features = ["desktop"] }
+
+[lib]
+name = "mhub_desktop"
+path = "src/lib.rs"
 
 [[bin]]
-name = "muster-desktop"
+name = "mhub-desktop"
 path = "src/main.rs"
 
 [lints]

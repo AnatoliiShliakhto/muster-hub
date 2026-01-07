@@ -3,6 +3,7 @@
 //! Procedural macros for the infrastructure.
 //! This crate provides attribute macros to simplify boilerplate associated with
 //! infrastructure components like the specialized async runtime.
+
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::__private::TokenStream2;
@@ -101,10 +102,56 @@ pub fn api_handler(args: TokenStream, item: TokenStream) -> TokenStream {
         #(#attrs)*
         #[allow(clippy::unused_async)]
         // Use the converted args2 here
-        #[cfg_attr(feature = "api", ::utoipa::path(#args2))]
+        #[::utoipa::path(#args2)]
         #vis #sig {
             #body
         }
     }
     .into()
+}
+
+/// Procedural macro to derive the `Tagged` trait.
+///
+/// This macro automatically implements `::mhub_vault::types::Tagged` for a struct.
+/// By default, it uses the struct's name as the tag. You can override this using
+/// the `#[tagged("custom_tag")]` attribute.
+///
+/// # Example
+/// ```rust
+/// #[derive(Tagged)]
+/// #[tagged("v1.user_profile")]
+/// struct UserProfile { ... }
+/// ```
+#[proc_macro_derive(Tagged, attributes(tagged))]
+pub fn derive_tagged(item: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(item as syn::DeriveInput);
+
+    let name = &input.ident;
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+
+    // 1. Determine the tag value
+    let mut tag_value = name.to_string();
+
+    // 2. Parse attributes with professional error handling
+    for attr in &input.attrs {
+        if attr.path().is_ident("tagged") {
+            let result = attr.parse_args::<syn::LitStr>().map(|lit| {
+                tag_value = lit.value();
+            });
+
+            if let Err(err) = result {
+                return err.to_compile_error().into();
+            }
+        }
+    }
+
+    // 3. Generate the implementation using split_for_impl for generics support
+    let expanded = quote! {
+        #[automatically_derived]
+        impl #impl_generics ::mhub_vault::types::Tagged for #name #ty_generics #where_clause {
+            const TAG: &'static str = #tag_value;
+        }
+    };
+
+    TokenStream::from(expanded)
 }

@@ -1,15 +1,22 @@
 [package]
 name = "{{package_name}}"
 description = "{{package_description}}"
+publish = false
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 
+[features]
+default = []
+api = ["mhub-kernel/api"]
+ui = ["mhub-kernel/ui"]
+
 [dependencies]
-muster-core.workspace = true
+mhub-kernel = { workspace = true, default-features = false }
 
 thiserror.workspace = true
+tracing.workspace = true
 
 [lints]
 workspace = true

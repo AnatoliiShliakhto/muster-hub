@@ -7,9 +7,16 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+mhub = { workspace = true, default-features = false, features = ["api"] }
+
 anyhow.workspace = true
 cargo-generate.workspace = true
 clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+rand = { workspace = true, features = ["os_rng"] }
+ed25519-dalek = { workspace = true, features = ["rand_core", "serde"] }
 
 [lints]
 workspace = true

@@ -22,7 +22,13 @@ pub type ChaCha = ChaCha20Poly1305;
 /// The primary interface for cryptographic operations.
 ///
 /// By default, it uses [`Aes`] (AES-256-GCM).
-pub type Vault<A = Aes> = SecurityVault<A>;
+pub type Vault<C = Aes> = SecurityVault<C>;
+
+/// A convenience trait that bundles the requirements for a Vault cipher.
+pub trait VaultCipher: AeadInPlace + KeyInit + 'static {}
+
+/// Blanket implementation for any type that meets the requirements.
+impl<T: AeadInPlace + KeyInit + 'static> VaultCipher for T {}
 
 // --- Markers ---
 
@@ -51,15 +57,15 @@ pub struct Fleet;
 /// The `Kind` type parameter ensures that the payload is treated according to its
 /// intended security domain ([`Local`] or [`Fleet`]).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ProtectedPayload<Kind, A = Aes> {
+pub struct ProtectedPayload<Kind, C = Aes> {
     pub(crate) data: Vec<u8>,
     #[serde(skip)]
     _kind: PhantomData<Kind>,
     #[serde(skip)]
-    _algo: PhantomData<A>,
+    _cipher: PhantomData<C>,
 }
 
-impl<K, A> ProtectedPayload<K, A> {
+impl<K, C> ProtectedPayload<K, C> {
     /// Splits the payload into its constituent cryptographic parts.
     ///
     /// Returns a tuple of `(nonce, ciphertext, tag)`.
@@ -71,22 +77,22 @@ impl<K, A> ProtectedPayload<K, A> {
     }
 }
 
-impl<K, A> AsRef<[u8]> for ProtectedPayload<K, A> {
+impl<K, C> AsRef<[u8]> for ProtectedPayload<K, C> {
     fn as_ref(&self) -> &[u8] {
         &self.data
     }
 }
 
-impl<K, A> Deref for ProtectedPayload<K, A> {
+impl<K, C> Deref for ProtectedPayload<K, C> {
     type Target = [u8];
     fn deref(&self) -> &Self::Target {
         &self.data
     }
 }
 
-impl<K, A> From<Vec<u8>> for ProtectedPayload<K, A> {
+impl<K, C> From<Vec<u8>> for ProtectedPayload<K, C> {
     fn from(data: Vec<u8>) -> Self {
-        Self { data, _kind: PhantomData, _algo: PhantomData }
+        Self { data, _kind: PhantomData, _cipher: PhantomData }
     }
 }
 
@@ -102,22 +108,20 @@ mod private {
 ///
 /// This trait is **sealed** to ensure that only authorized security domains
 /// ([`Local`] and [`Fleet`]) can be used for cryptographic operations.
-pub trait PayloadKind<A: AeadInPlace + KeyInit>:
-    private::Sealed + 'static
-{
+pub trait PayloadKind<C: VaultCipher>: private::Sealed + 'static {
     /// Selects the appropriate cipher from the vault for this security domain.
-    fn select_cipher(vault: &SecurityVault<A>) -> &A;
+    fn select_cipher(vault: &SecurityVault<C>) -> &C;
 }
 
-impl<A: AeadInPlace + KeyInit> PayloadKind<A> for Local {
-    fn select_cipher(vault: &SecurityVault<A>) -> &A {
-        &vault.local_cipher
+impl<C: VaultCipher> PayloadKind<C> for Local {
+    fn select_cipher(vault: &SecurityVault<C>) -> &C {
+        &vault.inner.local_cipher
     }
 }
 
-impl<A: AeadInPlace + KeyInit> PayloadKind<A> for Fleet {
-    fn select_cipher(vault: &SecurityVault<A>) -> &A {
-        &vault.fleet_cipher
+impl<C: VaultCipher> PayloadKind<C> for Fleet {
+    fn select_cipher(vault: &SecurityVault<C>) -> &C {
+        &vault.inner.fleet_cipher
     }
 }
 
@@ -141,8 +145,8 @@ impl<T: AsRef<[u8]>> AsContext for T {
     }
 }
 
-impl AsContext for str {
-    fn as_ctx(&self) -> &[u8] {
-        self.as_ref()
-    }
+/// A trait for types that provide a stable, unique cryptographic tag.
+pub trait Tagged {
+    /// A stable string identifier for the type.
+    const TAG: &'static str;
 }

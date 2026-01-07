@@ -1,7 +1,7 @@
 [package]
-name = "muster-runtime"
-description = "It's a new library muster-runtime"
-keywords = []
+name = "mhub-runtime"
+description = "Specialized async runtime wrapper with performance profiles"
+keywords = ["runtime", "tokio", "async", "performance", "bootstrap"]
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -11,7 +11,11 @@ readme.workspace = true
 license.workspace = true
 
 [dependencies]
-thiserror.workspace = true
+mhub-derive.workspace = true
+
+anyhow.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread"] }
+tracing.workspace = true
 
 [lints]
 workspace = true

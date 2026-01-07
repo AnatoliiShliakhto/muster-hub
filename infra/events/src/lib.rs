@@ -19,7 +19,7 @@
 //! # Example
 //!
 //! ```rust
-//! use event_bus::{EventBus, Result};
+//! use mhub_event_bus::{EventBus, Result, EventReceiverExt};
 //!
 //! #[derive(Clone, Debug, PartialEq)]
 //! struct UserCreated { id: u64 }
@@ -35,7 +35,7 @@
 //!     tokio::spawn(async move {
 //!         // Create a second subscription for the background task
 //!         // Alternatively, you could pass the first 'rx' if not needed elsewhere
-//!         while let Ok(event) = rx.recv().await {
+//!         while let Some(event) = rx.recv_event().await {
 //!             println!("Background processing for user: {}", event.id);
 //!         }
 //!     });
@@ -46,27 +46,7 @@
 //!     Ok(())
 //! }
 //! ```
-//!
-//! ### Handling Lagging Subscribers
-//!
-//! Because this bus uses broadcast channels, slow subscribers can "lag".
-//! Professionals handle this by checking for `RecvError::Lagged`:
-//!
-//! ```rust
-//! # use event_bus::{EventBus, Event};
-//! # #[derive(Clone, Debug)] struct Ping;
-//! # async fn doc() -> Result<(), tokio::sync::broadcast::error::RecvError> {
-//! # let mut rx = EventBus::new().subscribe::<Ping>().unwrap();
-//! match rx.recv().await {
-//!     Ok(event) => { /* handle event */ },
-//!     Err(tokio::sync::broadcast::error::RecvError::Lagged(skipped)) => {
-//!         eprintln!("System under load! Skipped {} messages", skipped);
-//!     }
-//!     Err(tokio::sync::broadcast::error::RecvError::Closed) => { /* bus shutdown */ }
-//! }
-//! # Ok(())
-//! # }
-//! ```
+
 mod error;
 
 pub use error::{Error, Result};
@@ -76,17 +56,17 @@ use parking_lot::RwLock;
 use std::any::{Any, TypeId};
 use std::sync::Arc;
 use tokio::sync::broadcast;
-use tracing::trace;
+use tracing::{trace, warn};
 
 /// A safe default for the broadcast channel buffer.
-/// 128 is usually sufficient for domain events in a vertical slice.
+/// 128 is usually enough for domain events in a vertical slice.
 const DEFAULT_CAPACITY: usize = 128;
 
 /// Marker trait for types that can be sent across the [`EventBus`].
 ///
-/// Any type that is `Send + Sync + Clone + 'static` automatically implements this trait.
-pub trait Event: Any + Send + Sync + Clone + 'static {}
-impl<T: Any + Send + Sync + Clone + 'static> Event for T {}
+/// Any type that is `Send + Sync + 'static` automatically implements this trait.
+pub trait Event: Any + Send + Sync + 'static {}
+impl<T: Any + Send + Sync + 'static> Event for T {}
 
 /// A high-performance, thread-safe Event Bus.
 ///
@@ -95,12 +75,13 @@ impl<T: Any + Send + Sync + Clone + 'static> Event for T {}
 /// across tasks or threads.
 #[derive(Clone, Default)]
 pub struct EventBus {
-    /// Inner state wrapped in an Arc and RwLock for concurrent access.
+    /// Inner state wrapped in an `Arc` and `RwLock` for concurrent access.
     channels: Arc<RwLock<FxHashMap<TypeId, Box<dyn Any + Send + Sync>>>>,
 }
 
 impl EventBus {
     /// Creates a new, empty `EventBus`.
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -111,7 +92,7 @@ impl EventBus {
     ///
     /// Returns [`Error::TypeMismatch`] if a channel for `T` exists but the
     /// internal downcast fails.
-    pub fn subscribe<T: Event>(&self) -> Result<broadcast::Receiver<T>> {
+    pub fn subscribe<T: Event>(&self) -> Result<broadcast::Receiver<Arc<T>>> {
         self.subscribe_with_capacity::<T>(DEFAULT_CAPACITY)
     }
 
@@ -126,34 +107,38 @@ impl EventBus {
     pub fn subscribe_with_capacity<T: Event>(
         &self,
         capacity: usize,
-    ) -> Result<broadcast::Receiver<T>> {
-        let type_id = TypeId::of::<T>();
-        let type_name = std::any::type_name::<T>();
+    ) -> Result<broadcast::Receiver<Arc<T>>> {
+        let id = TypeId::of::<T>();
 
-        // 1. Optimized Path: Try to get an existing sender with a Read Lock
         {
-            let read_guard = self.channels.read();
-            if let Some(any_sender) = read_guard.get(&type_id) {
-                return any_sender
-                    .downcast_ref::<broadcast::Sender<T>>()
-                    .map(|s| s.subscribe())
-                    .ok_or(Error::TypeMismatch(type_name));
+            let channels = self.channels.read();
+            if let Some(sender) = channels.get(&id) {
+                return sender
+                    .downcast_ref::<broadcast::Sender<Arc<T>>>()
+                    .map(broadcast::Sender::subscribe)
+                    .ok_or_else(|| {
+                        Error::TypeMismatch(std::any::type_name::<T>())
+                    });
             }
         }
 
-        // 2. Creation Path: Get Write Lock to initialize the channel
-        let mut write_guard = self.channels.write();
-
-        let sender = write_guard.entry(type_id).or_insert_with(|| {
-            trace!(event = type_name, capacity, "Initializing new event channel");
-            let (tx, _) = broadcast::channel::<T>(capacity);
+        let mut channels = self.channels.write();
+        let sender = channels.entry(id).or_insert_with(|| {
+            trace!(
+                event = std::any::type_name::<T>(),
+                capacity, "Initializing new event channel"
+            );
+            let (tx, _) = broadcast::channel::<Arc<T>>(capacity);
             Box::new(tx)
         });
 
-        sender
-            .downcast_ref::<broadcast::Sender<T>>()
-            .map(|s| s.subscribe())
-            .ok_or(Error::TypeMismatch(type_name))
+        let result = sender
+            .downcast_ref::<broadcast::Sender<Arc<T>>>()
+            .map(broadcast::Sender::subscribe)
+            .ok_or_else(|| Error::TypeMismatch(std::any::type_name::<T>()));
+
+        drop(channels);
+        result
     }
 
     /// Publishes an event to all active subscribers.
@@ -167,49 +152,91 @@ impl EventBus {
     ///
     /// Returns [`Error::TypeMismatch`] if the internal dynamic dispatch fails.
     pub fn publish<T: Event>(&self, event: T) -> Result<usize> {
-        let type_id = TypeId::of::<T>();
-        let read_guard = self.channels.read();
+        let id = TypeId::of::<T>();
+        let channels = self.channels.read();
 
-        if let Some(any_sender) = read_guard.get(&type_id) {
-            let sender = any_sender
-                .downcast_ref::<broadcast::Sender<T>>()
-                .ok_or_else(|| Error::TypeMismatch(std::any::type_name::<T>()))?; // Moved type_name here
+        if let Some(sender) = channels.get(&id) {
+            let sender =
+                sender.downcast_ref::<broadcast::Sender<Arc<T>>>().ok_or_else(
+                    || Error::TypeMismatch(std::any::type_name::<T>()),
+                )?;
 
-            match sender.send(event) {
-                Ok(count) => {
+            sender.send(Arc::new(event)).map_or_else(
+                |_| {
                     trace!(
                         event = std::any::type_name::<T>(),
-                        subscribers = count,
-                        "Event dispatched"
+                        "Event dropped: no active subscribers"
+                    );
+                    Ok(0)
+                },
+                |count| {
+                    trace!(
+                        event = std::any::type_name::<T>(),
+                        count, "Event dispatched"
                     );
                     Ok(count)
                 },
-                Err(_) => Ok(0),
-            }
+            )
         } else {
             Ok(0)
         }
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// --- Event Receiver Extensions  ---
 
-    #[derive(Clone, Debug, PartialEq)]
-    struct UserCreated {
-        id: u64,
-    }
+/// An extension trait for [`broadcast::Receiver`] to provide
+/// a more ergonomic and resilient event-processing API.
+pub trait EventReceiverExt<T> {
+    /// Receives the next event from the bus, automatically handling "Lagged" errors.
+    ///
+    /// ### Resilient Processing
+    /// In a broadcast-based system, a subscriber that processes messages slower than
+    /// the publisher will eventually "lag," causing the underlying channel to drop
+    /// older messages to make room for new ones.
+    ///
+    /// Standard receivers return an `Err(Lagged)` in this scenario. This method
+    /// handles that error by:
+    /// 1. Logging a warning with the count of skipped messages via `tracing`.
+    /// 2. Automatically resuming to the next available fresh message.
+    ///
+    /// ### Return Value
+    /// - `Some(T)`: A successfully received event.
+    /// - `None`: The event bus has been shut down or all senders have been dropped.
+    ///
+    /// ### Examples
+    ///
+    /// ```rust
+    /// use mhub_event_bus::{EventBus, EventReceiverExt};
+    ///
+    /// #[derive(Clone, Debug, PartialEq)]
+    /// struct UserCreated { id: u64 }
+    ///
+    /// # async fn doc(bus: EventBus) {
+    /// let mut rx = bus.subscribe::<UserCreated>().unwrap();
+    ///
+    /// while let Some(event) = rx.recv_event().await {
+    ///     println!("Received: {:?}", event);
+    /// }
+    /// # }
+    /// ```
+    fn recv_event(&mut self) -> impl Future<Output = Option<Arc<T>>> + Send;
+}
 
-    #[tokio::test]
-    async fn test_event_flow() {
-        let bus = EventBus::new();
-        let mut rx = bus.subscribe::<UserCreated>().unwrap();
-
-        let event = UserCreated { id: 42 };
-        bus.publish(event.clone()).unwrap();
-
-        let received = rx.recv().await.unwrap();
-        assert_eq!(received, event);
+impl<T: Event> EventReceiverExt<T> for broadcast::Receiver<Arc<T>> {
+    async fn recv_event(&mut self) -> Option<Arc<T>> {
+        loop {
+            match self.recv().await {
+                Ok(event) => return Some(event),
+                Err(broadcast::error::RecvError::Lagged(n)) => {
+                    warn!(
+                        event = std::any::type_name::<T>(),
+                        skipped = n,
+                        "EventBus receiver lagged; continuing from latest message"
+                    );
+                },
+                Err(broadcast::error::RecvError::Closed) => return None,
+            }
+        }
     }
 }

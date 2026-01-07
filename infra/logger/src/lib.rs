@@ -7,11 +7,10 @@
 //! ## Example
 //!
 //! ```rust
-//! # use muster_logger::{LoggerBuilder, LevelFilter};
+//! # use mhub_logger::{LoggerBuilder, LevelFilter};
 //!
 //! let _logger = LoggerBuilder::new("my-app")
 //!     .with_stdout(true)
-//!     .with_file_logging("./logs")
 //!     .with_level(LevelFilter::DEBUG)
 //!     .init()
 //!     .unwrap();
@@ -107,8 +106,9 @@ impl LoggerBuilder {
     /// # Errors
     /// Returns [`Error::AlreadyInitialized`] if a global subscriber has already been set.
     pub fn init(self) -> Result<Logger> {
-        let env_filter =
-            EnvFilter::builder().with_default_directive(self.default_level.into()).from_env_lossy();
+        let env_filter = EnvFilter::builder()
+            .with_default_directive(self.default_level.into())
+            .from_env_lossy();
 
         let mut layers = Vec::new();
 
@@ -126,9 +126,9 @@ impl LoggerBuilder {
         // 2. Set up File Logging (Side effects: directory creation)
         let guard = if let Some(path) = self.file_path {
             fs::create_dir_all(&path).map_err(|e| {
-                std::io::Error::new(
-                    e.kind(),
-                    format!("Failed to create log directory {path}: {e}", path = path.display()),
+                format!(
+                    "Failed to create log directory {path}: {e}",
+                    path = path.display()
                 )
             })?;
 
@@ -139,7 +139,8 @@ impl LoggerBuilder {
                 .max_log_files(self.max_files)
                 .build(path)?;
 
-            let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
+            let (non_blocking, guard) =
+                tracing_appender::non_blocking(file_appender);
 
             let file_layer = layer()
                 .json()
@@ -181,10 +182,9 @@ impl Logger {
     /// # Example
     ///
     /// ```rust
-    /// # use muster_logger::Logger;
-    /// let _logger = Logger::builder("muster-api")
+    /// # use mhub_logger::{LevelFilter, Logger};
+    /// let _logger = Logger::builder("mhub-api")
     ///     .with_stdout(true)
-    ///     .with_file_logging("./logs")
     ///     .with_level(LevelFilter::DEBUG)
     ///     .init()
     ///     .unwrap();
@@ -230,15 +230,22 @@ mod tests {
     #[test]
     #[serial]
     fn test_file_logging_setup() -> Result<()> {
-        let tmp_dir = tempdir().map_err(|e| std::io::Error::new(e.kind(), e))?;
+        let tmp_dir =
+            tempdir().map_err(|e| format!("Failed to create temp dir: {e}"))?;
         let log_dir = tmp_dir.path().join("logs");
 
         // Configuration
-        let builder = LoggerBuilder::new("test-app").with_file_logging(&log_dir);
+        let builder =
+            LoggerBuilder::new("test-app").with_file_logging(&log_dir);
 
         // We simulate the part of .build() that creates the directory
         if let Some(path) = &builder.file_path {
-            fs::create_dir_all(path)?;
+            fs::create_dir_all(path).map_err(|e| {
+                format!(
+                    "Failed to create log directory {path}: {e}",
+                    path = path.display()
+                )
+            })?;
         }
 
         assert!(log_dir.exists());

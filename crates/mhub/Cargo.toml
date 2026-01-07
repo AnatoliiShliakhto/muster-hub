@@ -1,6 +1,6 @@
 [package]
 name = "mhub"
-description = "It's a facade of features"
+description = "Feature Gateway Crate"
 publish = false
 version.workspace = true
 edition.workspace = true
@@ -8,16 +8,30 @@ rust-version.workspace = true
 license.workspace = true
 
 [features]
-full = ["api", "ui", "identity"]
+default = []
 
-api = ["mhub-core/api"]
-ui = ["mhub-core/ui"]
-identity = ["dep:mhub-identity"]
+# Platform features
+api = [
+    "mhub-kernel/api",
+    "mhub-auth/api",
+    # "mhub-exam/api",
+    # "mhub-survey/api",
+]
+ui = [
+    "mhub-kernel/ui",
+    "mhub-auth/ui",
+    # "mhub-exam/ui",
+    # "mhub-survey/ui",
+]
+
+# Optional features (can be disabled at compile time)
+full = ["auth"]
+auth = ["dep:mhub-auth"]
 
 [dependencies]
-mhub-core = { path = "../core" }
-mhub-domain = { path = "../domain" }
-mhub-identity = { path = "../identity", optional = true }
+mhub-kernel.workspace = true
+mhub-domain.workspace = true
+mhub-auth = { workspace = true, optional = true }
 
 anyhow.workspace = true
 

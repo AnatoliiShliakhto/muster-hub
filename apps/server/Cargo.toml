@@ -1,5 +1,5 @@
 [package]
-name = "muster-server"
+name = "mhub-server"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -11,9 +11,24 @@ readme.workspace = true
 license.workspace = true
 
 [dependencies]
+mhub = { workspace = true, features = ["api"] }
+mhub-db.workspace = true
+mhub-event-bus.workspace = true
+mhub-runtime.workspace = true
+mhub-logger.workspace = true
+
+anyhow.workspace = true
+tokio = { workspace = true, features = ["signal"] }
+tracing.workspace = true
+axum = { workspace = true, features = ["macros", "multipart", "tokio", "http1", "json"] }
+axum-server = { workspace = true, features = ["tls-rustls"] }
+utoipa.workspace = true
+utoipa-axum.workspace = true
+utoipa-scalar = { workspace = true, features = ["axum"] }
+tower.workspace = true
 
 [[bin]]
-name = "muster-server"
+name = "mhub-server"
 path = "src/main.rs"
 
 [lints]

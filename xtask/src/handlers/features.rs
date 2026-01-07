@@ -1,13 +1,30 @@
-use crate::services::utils::get_project_root;
+use crate::services::utils::{
+    get_project_root, get_workspace_crates, refresh_metadata,
+    render_crate_table,
+};
 use anyhow::Result;
 use cargo_generate::{GenerateArgs, TemplatePath, generate};
+
+/// Lists all crates in the `crates/features` directory.
+pub fn list_crates() -> Result<()> {
+    let features = get_workspace_crates("crates/features")?;
+
+    if features.is_empty() {
+        println!("ℹ️ No features found in 'crates/features/' directory.");
+        return Ok(());
+    }
+
+    render_crate_table("Features", &features);
+
+    Ok(())
+}
 
 pub fn create_feature(name: &str) -> Result<()> {
     let project_root = get_project_root()?;
 
     let define = vec![
-        format!("package_name=muster-{name}"),
-        format!("package_description=It's a new feature muster-{name}"),
+        format!("package_name=mhub-{name}"),
+        format!("package_description=It's a new feature {name}"),
     ];
 
     let args = GenerateArgs {
@@ -15,7 +32,7 @@ pub fn create_feature(name: &str) -> Result<()> {
         destination: Some(project_root.join("crates")),
         define,
         template_path: TemplatePath {
-            path: Some("xtask/templates/feature-template".to_owned()),
+            path: Some("xtask/templates/feature".to_owned()),
             ..Default::default()
         },
         silent: true,
@@ -25,17 +42,6 @@ pub fn create_feature(name: &str) -> Result<()> {
     generate(args)?;
     refresh_metadata()?;
 
-    println!("✅ Created crate '{name}' with package 'muster-{name}'");
-    Ok(())
-}
-
-fn refresh_metadata() -> Result<()> {
-    println!("Refreshing workspace metadata...");
-    std::process::Command::new("cargo")
-        .arg("metadata")
-        .arg("--format-version")
-        .arg("1")
-        .stdout(std::process::Stdio::null())
-        .status()?;
+    println!("✅ Created feature 'mhub-{name}' with package 'crates/features/{name}'");
     Ok(())
 }

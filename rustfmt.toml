@@ -13,7 +13,7 @@ newline_style = "Windows"
 use_try_shorthand = true
 
 # Control how many characters are allowed per line (Standard is 100)
-max_width = 100
+max_width = 80
 
 # This ensures that 'match' arms are formatted consistently
 match_block_trailing_comma = true

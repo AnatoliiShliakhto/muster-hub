@@ -1,6 +1,6 @@
 //! # Vault Errors
 //!
-//! This module defines the [`Error`] enum and [`Result`] type used throughout 
+//! This module defines the [`Error`] enum and [`Result`] type used throughout
 //! the vault crate for reporting cryptographic, serialization, and configuration failures.
 
 use std::borrow::Cow;
@@ -15,7 +15,7 @@ pub enum Error {
 
     /// Failure during the decryption process.
     ///
-    /// This usually indicates an incorrect key, a mismatched cryptographic 
+    /// This usually indicates an incorrect key, a mismatched cryptographic
     /// context (AAD), or tampered data.
     #[error("Decryption failed: {0}")]
     DecryptionFailed(String),
@@ -38,7 +38,7 @@ pub enum Error {
 
     /// Internal fallback for unexpected issues or logic errors.
     #[error("{0}")]
-    Internal(Cow<'static, str>)
+    Internal(Cow<'static, str>),
 }
 
 impl From<String> for Error {

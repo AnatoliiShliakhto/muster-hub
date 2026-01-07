@@ -1,20 +1,33 @@
 //! License validation utilities
 
 use super::LicenseError;
-use super::types::SignedLicense;
+use super::models::SignedLicense;
 use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-/// Validates a signed license
+/// Validates a signed license against the provided public key.
+///
+/// # Arguments
+/// * `license` - A reference to the [`SignedLicense`] structure containing the license data and signature.
+/// * `public_key` - A 32-byte array representing the public key for signature verification.
+///
+/// # Returns
+/// *Returns* `Ok(())` if both the expiry and signature checks pass successfully.
+///
+/// # Errors
+/// *Returns* a [`LicenseError`] if:
+/// - The license has expired.
+/// - The signature verification fails.
+/// - Any other internal validation errors occur.
 pub fn validate_license(
     license: &SignedLicense,
-    public_key_bytes: &[u8; 32],
+    public_key: &[u8; 32],
 ) -> Result<(), LicenseError> {
     // 1. Check expiry
     check_expiry(license)?;
 
     // 2. Verify signature
-    verify_signature(license, public_key_bytes)?;
+    verify_signature(license, public_key)?;
 
     Ok(())
 }
